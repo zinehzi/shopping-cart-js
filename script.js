@@ -48,6 +48,7 @@ cartTotal.appendChild(cartTotalInfo);
 const cartTotalPay = document.createElement("span");
 cartTotalPay.textContent = "قابل پرداخت :" + " " + totalWithTax;
 cartTotal.appendChild(cartTotalPay);
+let selectedItems = [];
 
 for (const product of products) {
   const productList = document.querySelector(".product-list");
@@ -82,52 +83,72 @@ for (const product of products) {
   const cartList = document.querySelector(".cart-list");
   cartList.textContent = "سبد خرید شما خالی است.";
 
+
   productButton.onclick = () => {
     cartList.firstChild.textContent = "";
     cartList.classList.remove("empty-cart");
 
-    let itemCount = 1;
 
-    const cartItem = document.createElement("li");
-    cartItem.classList.add("cart-item");
-    cartItem.setAttribute("id", product.id);
-    cartItem.textContent =
-      product.title +
-      " - " +
-      commas +
-      " " +
-      "تومان" +
-      " " +
-      `(${itemCount} عدد)`;
-
-    if (cartList.children.length === 0) {
-      cartList.appendChild(cartItem);
+    if (selectedItems.length === 0) {
+      selectedItems.push({id:product.id,quantity:1});
     } else {
-      for (item of cartList.children) {
-        if (item.id === product.id) {
-          cartItem.textContent =
-            product.title +
-            " - " +
-            commas +
-            " " +
-            "تومان" +
-            " " +
-            `(${itemCount + 1} عدد)`;
-          console.log("duplicate");
-        } else {
-          cartList.appendChild(cartItem);
-          console.log("new");
-        }
+      const currentProduct = selectedItems.find(item => item.id === product.id);
+      if(currentProduct) {
+        selectedItems.map (item => {
+          if(item.id == product.id) {
+            item.quantity++
+          }
+        })
+      }else {
+        selectedItems.push({id:product.id,quantity:1});
       }
     }
+    console.log(selectedItems);
+    cartList.innerHTML ="";
+    for(x of selectedItems) {
+      const matchedProduct = products.find(item=> item.id === x.id )
+      const cartItem = document.createElement("li");
+      cartItem.classList.add("cart-item");
+      cartItem.setAttribute("id", matchedProduct.id);
+      cartItem.textContent =
+      matchedProduct.title +
+        " - " +
+        matchedProduct.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
+        " " +
+        "تومان" +
+        " " +
+        `(${x.quantity} عدد)`;
 
-    const cartImage = document.createElement("img");
-    cartImage.setAttribute("src", `images/${product.image}`);
-    cartItem.appendChild(cartImage);
+        const cartImage = document.createElement("img");
+        cartImage.setAttribute("src", `images/${matchedProduct.image}`);
+        cartItem.appendChild(cartImage);
+    
+        const cartIcon = document.createElement("i");
+        cartIcon.classList.add("fa", "fa-trash");
+        cartItem.appendChild(cartIcon);
+        cartIcon.onclick = () => {
+          cartIcon.parentElement.remove();
+          const selectedItemQuantity =selectedItems.find(item=> item.id == matchedProduct.id ).quantity
+          total -= matchedProduct.price * selectedItemQuantity;
+          totalCommas = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          cartTotalInfo.textContent = "جمع کل :" + " " + totalCommas;
+          selectedItems = selectedItems.filter(item=> item.id !== matchedProduct.id)
 
-    const cartIcon = document.createElement("i");
-    cartIcon.classList.add("fa", "fa-trash");
-    cartItem.appendChild(cartIcon);
+          totalWithTax = total + total * 0.09;
+          let totalTaxCommas = totalWithTax
+            .toString()
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          cartTotalPay.textContent = "قابل پرداخت :" + " " + totalTaxCommas;
+          if(selectedItems == 0) {
+            cartList.textContent = "سبد خرید شما خالی است.";
+            cartList.classList.add("empty-cart");
+          }
+
+
+    }
+    cartList.appendChild(cartItem);
+
+  }
 
     total += product.price;
     let totalCommas = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -138,22 +159,5 @@ for (const product of products) {
       .toString()
       .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     cartTotalPay.textContent = "قابل پرداخت :" + " " + totalTaxCommas;
-
-    cartIcon.onclick = () => {
-      cartIcon.parentElement.remove();
-      total -= product.price;
-      totalCommas = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-      cartTotalInfo.textContent = "جمع کل :" + " " + totalCommas;
-
-      totalWithTax = total + total * 0.09;
-      totalTaxCommas = totalWithTax
-        .toString()
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-      cartTotalPay.textContent = "قابل پرداخت :" + " " + totalTaxCommas;
-      if (total === 0) {
-        cartList.textContent = "سبد خرید شما خالی است.";
-        cartList.classList.add("empty-cart");
-      }
-    };
   };
 }
